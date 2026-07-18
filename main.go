@@ -53,7 +53,7 @@ func main() {
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "     ")
-		enc.Encode(meta)
+		_ = enc.Encode(meta)
 		return
 	}
 

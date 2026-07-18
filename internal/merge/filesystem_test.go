@@ -29,16 +29,16 @@ func setupTestTree(t *testing.T) (string, string) {
 	// Permission-only difference
 	writeFile(t, rootA, "perm-file.txt", "same content\n")
 	writeFile(t, rootB, "perm-file.txt", "same content\n")
-	os.Chmod(filepath.Join(rootA, "perm-file.txt"), 0644)
-	os.Chmod(filepath.Join(rootB, "perm-file.txt"), 0755)
+	_ = os.Chmod(filepath.Join(rootA, "perm-file.txt"), 0644)
+	_ = os.Chmod(filepath.Join(rootB, "perm-file.txt"), 0755)
 
 	// Type change: file in A, dir in B
 	writeFile(t, rootA, "type-change", "I am a file\n")
-	os.MkdirAll(filepath.Join(rootB, "type-change"), 0755)
+	_ = os.MkdirAll(filepath.Join(rootB, "type-change"), 0755)
 
 	// Nested identical
-	os.MkdirAll(filepath.Join(rootA, "sub/dir"), 0755)
-	os.MkdirAll(filepath.Join(rootB, "sub/dir"), 0755)
+	_ = os.MkdirAll(filepath.Join(rootA, "sub/dir"), 0755)
+	_ = os.MkdirAll(filepath.Join(rootB, "sub/dir"), 0755)
 	writeFile(t, rootA, "sub/dir/nested.txt", "nested\n")
 	writeFile(t, rootB, "sub/dir/nested.txt", "nested\n")
 

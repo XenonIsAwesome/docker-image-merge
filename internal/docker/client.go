@@ -190,7 +190,7 @@ func (c *Client) ExtractFilesystem(ctx context.Context, imageName, destDir strin
 	// Ensure the container is cleaned up regardless of outcome.
 	defer func() {
 		rmCmd := exec.Command("docker", "rm", "-f", containerName)
-		rmCmd.Run()
+		_ = rmCmd.Run()
 	}()
 
 	// Export the container filesystem to a tar archive.
@@ -275,8 +275,8 @@ func (c *Client) ImportSquashed(ctx context.Context, tarDir, outputRef string, m
 		return "", fmt.Errorf("tar: %w", err)
 	}
 
-	tarCmd.Wait()
-	importCmd.Wait()
+	_ = tarCmd.Wait()
+	_ = importCmd.Wait()
 
 	if importCmd.Process != nil && importCmd.ProcessState != nil && !importCmd.ProcessState.Success() {
 		return "", fmt.Errorf("docker import failed")

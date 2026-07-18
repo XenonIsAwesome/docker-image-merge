@@ -239,15 +239,15 @@ func (m Model) openEditor() tea.Cmd {
 		content := fmt.Sprintf("<<<<<<< Image A\n%s\n=======\n%s\n>>>>>>> Image B\n",
 			readFileContent(c.InfoA.AbsPath),
 			readFileContent(c.InfoB.AbsPath))
-		tmpFile.WriteString(content)
-		tmpFile.Close()
+		_, _ = tmpFile.WriteString(content)
+		_ = tmpFile.Close()
 
 		// Launch the editor and wait for the user to finish.
 		cmd := exec.Command(editor, tmpFile.Name())
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Run()
+		_ = cmd.Run()
 
 		// If conflict markers remain, the user kept A; otherwise assume B.
 		edited, _ := os.ReadFile(tmpFile.Name())
