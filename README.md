@@ -9,7 +9,19 @@ endorsed by, or sponsored by Docker, Inc.
 
 ## Installation
 
-### Binary (recommended)
+### Quick install (recommended)
+
+```bash
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/XenonIsAwesome/docker-image-merge/refs/heads/main/scripts/install.sh | sh
+
+# Windows (PowerShell)
+iwr -useb https://raw.githubusercontent.com/XenonIsAwesome/docker-image-merge/refs/heads/main/scripts/install.ps1 | iex
+```
+
+See the [full installation guide](docs/pages/installation.md) for system-wide installs, custom directories, and all options.
+
+### Binary
 
 Download a pre-built binary from [Releases](https://github.com/XenonIsAwesome/docker-image-merge/releases).
 
@@ -31,10 +43,12 @@ docker build -t docker-imagemerge .
 
 ### Docker CLI plugin
 
-Copy the binary to a directory on your `$PATH`:
+Copy the binary to your Docker CLI plugins directory:
 
 ```bash
-sudo cp docker-imagemerge /usr/local/bin/docker-imagemerge
+mkdir -p ~/.docker/cli-plugins
+cp docker-imagemerge ~/.docker/cli-plugins/
+chmod +x ~/.docker/cli-plugins/docker-imagemerge
 ```
 
 Then run:
