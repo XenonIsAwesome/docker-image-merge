@@ -51,13 +51,3 @@ jobs:
           files: |
             dist/docker-imagemerge-*
             dist/checksums.txt
-
-      - name: Build and push Docker image
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          IMAGE=ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          docker build -t ${IMAGE}:${VERSION} .
-          docker tag ${IMAGE}:${VERSION} ${IMAGE}:latest
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ${IMAGE}:${VERSION}
-          docker push ${IMAGE}:latest
