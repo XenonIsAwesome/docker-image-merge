@@ -52,7 +52,7 @@ func setupTestTree(t *testing.T) (string, string) {
 func writeFile(t *testing.T, root, rel, content string) {
 	t.Helper()
 	path := filepath.Join(root, rel)
-	os.MkdirAll(filepath.Dir(path), 0755)
+	_ = os.MkdirAll(filepath.Dir(path), 0755)
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		t.Fatalf("writing test file %s: %v", rel, err)
 	}
