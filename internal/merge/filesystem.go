@@ -511,7 +511,7 @@ func hexDump(data []byte, label string) string {
 
 // GenerateDiff produces a simple side-by-side text representation of two files.
 // The output is intended for display in the TUI diff pane.
-func GenerateDiff(pathA, pathB string) string {
+func GenerateDiff(pathA, pathB, labelA, labelB string) string {
 	fa, errA := os.ReadFile(pathA)
 	fb, errB := os.ReadFile(pathB)
 
@@ -528,9 +528,9 @@ func GenerateDiff(pathA, pathB string) string {
 	// Detect binary files and show a hex dump instead of garbled output.
 	if isBinary(fa) || isBinary(fb) {
 		var out strings.Builder
-		out.WriteString(hexDump(fa, "Image A"))
+		out.WriteString(hexDump(fa, labelA))
 		out.WriteString("\n")
-		out.WriteString(hexDump(fb, "Image B"))
+		out.WriteString(hexDump(fb, labelB))
 		return out.String()
 	}
 
@@ -538,11 +538,11 @@ func GenerateDiff(pathA, pathB string) string {
 	linesB := strings.Split(string(fb), "\n")
 
 	var out strings.Builder
-	out.WriteString("--- Image A ---\n")
+	out.WriteString(fmt.Sprintf("--- %s ---\n", labelA))
 	for i, line := range linesA {
 		out.WriteString(fmt.Sprintf("%3d | %s\n", i+1, line))
 	}
-	out.WriteString("--- Image B ---\n")
+	out.WriteString(fmt.Sprintf("--- %s ---\n", labelB))
 	for i, line := range linesB {
 		out.WriteString(fmt.Sprintf("%3d | %s\n", i+1, line))
 	}

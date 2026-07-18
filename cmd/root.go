@@ -204,7 +204,7 @@ func runMerge(imageA, imageB, outputImage string, opts *flags.Options) error {
 
 	case flags.StrategyInteractive:
 		// Launch the BubbleTea TUI for per-file conflict resolution.
-		confirmed, err := tui.Run(diffResult.Conflicts)
+		confirmed, err := tui.Run(diffResult.Conflicts, imageA, imageB)
 		if err != nil {
 			return fmt.Errorf("running conflict resolver: %w", err)
 		}

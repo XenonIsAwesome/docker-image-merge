@@ -27,6 +27,12 @@ type Model struct {
 	// diffView is the pre-formatted side-by-side diff text for the current conflict.
 	diffView string
 
+	// imageA is the name/tag of image A (the base image).
+	imageA string
+
+	// imageB is the name/tag of image B (the incoming image).
+	imageB string
+
 	// quitting is set when the user presses q or Ctrl+C to abort.
 	quitting bool
 
@@ -42,10 +48,12 @@ type Model struct {
 
 // NewModel creates a Model pre-loaded with the given conflicts and computes
 // the initial diff view.
-func NewModel(conflicts []*merge.Conflict) Model {
+func NewModel(conflicts []*merge.Conflict, imageA, imageB string) Model {
 	m := Model{
 		conflicts: conflicts,
 		current:   0,
+		imageA:    imageA,
+		imageB:    imageB,
 		width:     120,
 		height:    40,
 	}
@@ -62,7 +70,7 @@ func (m *Model) updateDiff() {
 
 	c := m.conflicts[m.current]
 	if c.InfoA != nil && c.InfoB != nil && c.InfoA.AbsPath != "" && c.InfoB.AbsPath != "" {
-		m.diffView = merge.GenerateDiff(c.InfoA.AbsPath, c.InfoB.AbsPath)
+		m.diffView = merge.GenerateDiff(c.InfoA.AbsPath, c.InfoB.AbsPath, m.imageA, m.imageB)
 	} else {
 		m.diffView = fmt.Sprintf("File: %s\nKind: %s\n", c.Path, c.Kind)
 	}
@@ -305,8 +313,8 @@ func (m Model) renderConflictView() string {
 		paneWidth = 20
 	}
 
-	leftPane := m.renderPane("Image A", m.conflicts[m.current].InfoA, paneWidth, ColorA)
-	rightPane := m.renderPane("Image B", m.conflicts[m.current].InfoB, paneWidth, ColorB)
+	leftPane := m.renderPane(m.imageA, m.conflicts[m.current].InfoA, paneWidth, ColorA)
+	rightPane := m.renderPane(m.imageB, m.conflicts[m.current].InfoB, paneWidth, ColorB)
 
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, leftPane, "  ", rightPane))
 	b.WriteString("\n\n")
@@ -436,7 +444,7 @@ type doneMsg struct{}
 //
 // If no conflicts need resolution (e.g. all are OnlyA/OnlyB), it auto-resolves
 // without launching the TUI.
-func Run(conflicts []*merge.Conflict) (bool, error) {
+func Run(conflicts []*merge.Conflict, imageA, imageB string) (bool, error) {
 	// Check if any conflicts actually need interactive resolution.
 	needsResolution := false
 	for _, c := range conflicts {
@@ -460,7 +468,7 @@ func Run(conflicts []*merge.Conflict) (bool, error) {
 
 	// Launch the full-screen BubbleTea TUI.
 	p := tea.NewProgram(
-		NewModel(conflicts),
+		NewModel(conflicts, imageA, imageB),
 		tea.WithAltScreen(),
 	)
 
