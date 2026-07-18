@@ -309,7 +309,7 @@ func (c *Client) BuildLayered(ctx context.Context, baseImage, mergedDir, outputR
 	var df strings.Builder
 	df.WriteString(fmt.Sprintf("FROM %s\n", baseImage))
 	df.WriteString("COPY . /tmp/merged/\n")
-	df.WriteString("RUN rm -f /tmp/merged/etc/resolv.conf /tmp/merged/etc/hosts /tmp/merged/etc/hostname && cp -a /tmp/merged/. / && rm -rf /tmp/merged\n")
+	df.WriteString("RUN cp -a /tmp/merged/. / 2>/dev/null; rm -rf /tmp/merged\n")
 
 	for _, change := range changes {
 		df.WriteString(change + "\n")
