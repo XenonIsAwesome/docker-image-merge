@@ -57,6 +57,12 @@ func main() {
 		return
 	}
 
+	// Docker CLI plugins are invoked as: docker-<pluginname> <pluginname> [args...]
+	// Strip the plugin name prefix so Cobra only sees the user's arguments.
+	if len(os.Args) > 1 && os.Args[1] == "imagemerge" {
+		os.Args = append(os.Args[:1], os.Args[2:]...)
+	}
+
 	// Normal execution: build and run the Cobra command tree.
 	rootCmd := cmd.NewRootCmd()
 	if err := rootCmd.Execute(); err != nil {
