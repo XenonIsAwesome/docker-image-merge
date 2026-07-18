@@ -2,3 +2,4 @@ docker-imagemerge
 docker-image-merge
 *.tar
 tmp/
+docs/output/
