@@ -18,7 +18,7 @@ import (
 // conflict, and the generated diff text. Keyboard events drive state
 // transitions; the final model's resolutions are read back after Quit.
 type Model struct {
-	// conflicts is the full list of conflicts being resolved.
+	// conflicts is the filtered list of conflicts needing resolution.
 	conflicts []*merge.Conflict
 
 	// current is the index into conflicts of the conflict being displayed.
@@ -44,18 +44,30 @@ type Model struct {
 
 	// height is the terminal height in rows.
 	height int
+
+	// totalDiffs is the total number of diffs (including auto-resolved).
+	totalDiffs int
+
+	// autoResolvedA is the count of non-conflicting diffs auto-resolved as TakeA.
+	autoResolvedA int
+
+	// autoResolvedB is the count of non-conflicting diffs auto-resolved as TakeB.
+	autoResolvedB int
 }
 
 // NewModel creates a Model pre-loaded with the given conflicts and computes
 // the initial diff view.
-func NewModel(conflicts []*merge.Conflict, imageA, imageB string) Model {
+func NewModel(conflicts []*merge.Conflict, imageA, imageB string, totalDiffs, autoA, autoB int) Model {
 	m := Model{
-		conflicts: conflicts,
-		current:   0,
-		imageA:    imageA,
-		imageB:    imageB,
-		width:     120,
-		height:    40,
+		conflicts:     conflicts,
+		current:       0,
+		imageA:        imageA,
+		imageB:        imageB,
+		width:         120,
+		height:        40,
+		totalDiffs:    totalDiffs,
+		autoResolvedA: autoA,
+		autoResolvedB: autoB,
 	}
 	m.updateDiff()
 	return m
@@ -242,7 +254,7 @@ func (m Model) openEditor() tea.Cmd {
 		if err != nil {
 			return doneMsg{}
 		}
-		defer os.Remove(tmpFile.Name())
+		defer os.Remove(tmpFile.Name()) //nolint:errcheck
 
 		content := fmt.Sprintf("<<<<<<< Image A\n%s\n=======\n%s\n>>>>>>> Image B\n",
 			readFileContent(c.InfoA.AbsPath),
@@ -344,9 +356,9 @@ func (m Model) renderPane(label string, info *merge.FileInfo, width int, color l
 	if info == nil {
 		content.WriteString("(not present)")
 	} else if info.IsDir {
-		content.WriteString(fmt.Sprintf("[directory]\n%s", info.RelPath))
+		fmt.Fprintf(&content, "[directory]\n%s", info.RelPath)
 	} else if info.IsSymlink {
-		content.WriteString(fmt.Sprintf("[symlink] -> %s", info.SymlinkTarget))
+		fmt.Fprintf(&content, "[symlink] -> %s", info.SymlinkTarget)
 	} else {
 		if m.diffView != "" && m.current < len(m.conflicts) {
 			lines := strings.Split(m.diffView, "\n")
@@ -374,7 +386,7 @@ func (m Model) renderPane(label string, info *merge.FileInfo, width int, color l
 				content.WriteString("\n")
 			}
 		} else {
-			content.WriteString(fmt.Sprintf("Size: %d bytes\nMode: %o", info.Size, info.Mode))
+			fmt.Fprintf(&content, "Size: %d bytes\nMode: %o", info.Size, info.Mode)
 		}
 	}
 
@@ -408,18 +420,24 @@ func (m Model) renderSummary() string {
 		}
 	}
 
+	totalTakeA := takeA + m.autoResolvedA
+	totalTakeB := takeB + m.autoResolvedB
+
 	b.WriteString(TitleStyle.Render("Merge Summary"))
 	b.WriteString("\n\n")
-	b.WriteString(fmt.Sprintf("Total conflicts:  %d\n", len(m.conflicts)))
-	b.WriteString(ResolvedAStyle.Render(fmt.Sprintf("Take A:           %d", takeA)))
+	fmt.Fprintf(&b, "Total diffs:      %d\n", m.totalDiffs)
+	b.WriteString(ResolvedAStyle.Render(fmt.Sprintf("Take A:           %d", totalTakeA)))
 	b.WriteString("\n")
-	b.WriteString(ResolvedBStyle.Render(fmt.Sprintf("Take B:           %d", takeB)))
+	b.WriteString(ResolvedBStyle.Render(fmt.Sprintf("Take B:           %d", totalTakeB)))
 	b.WriteString("\n")
 	b.WriteString(SkippedStyle.Render(fmt.Sprintf("Skipped:          %d", skipped)))
 	b.WriteString("\n")
 
+	if m.autoResolvedA+m.autoResolvedB > 0 {
+		fmt.Fprintf(&b, "Auto-resolved:    %d\n", m.autoResolvedA+m.autoResolvedB)
+	}
 	if unresolved > 0 {
-		b.WriteString(fmt.Sprintf("Unresolved:       %d\n", unresolved))
+		fmt.Fprintf(&b, "Unresolved:       %d\n", unresolved)
 	}
 
 	b.WriteString("\n")
@@ -442,9 +460,9 @@ type doneMsg struct{}
 // the user finishes. It returns (true, nil) if resolutions were confirmed,
 // or (false, nil) if the user aborted.
 //
-// If no conflicts need resolution (e.g. all are OnlyA/OnlyB), it auto-resolves
-// without launching the TUI.
-func Run(conflicts []*merge.Conflict, imageA, imageB string) (bool, error) {
+// allDiffs is the full list of diffs (including auto-resolved OnlyA/OnlyB).
+// conflicts is the filtered list of conflicts needing resolution.
+func Run(conflicts []*merge.Conflict, allDiffs []*merge.Conflict, imageA, imageB string) (bool, error) {
 	// Check if any conflicts actually need interactive resolution.
 	needsResolution := false
 	for _, c := range conflicts {
@@ -454,21 +472,35 @@ func Run(conflicts []*merge.Conflict, imageA, imageB string) (bool, error) {
 		}
 	}
 
-	// Auto-resolve non-conflicting differences without launching the TUI.
+	// If nothing needs resolution, auto-resolve everything.
 	if !needsResolution {
-		for _, c := range conflicts {
-			if c.Kind == merge.OnlyB {
+		for _, c := range allDiffs {
+			switch c.Kind {
+			case merge.OnlyB:
 				c.Resolution = merge.ResolutionTakeB
-			} else if c.Kind == merge.OnlyA {
+			case merge.OnlyA:
 				c.Resolution = merge.ResolutionTakeA
 			}
 		}
 		return true, nil
 	}
 
+	// Count auto-resolved diffs for the summary.
+	autoA, autoB := 0, 0
+	for _, c := range allDiffs {
+		if !c.Kind.NeedsResolution() {
+			switch c.Resolution {
+			case merge.ResolutionTakeA:
+				autoA++
+			case merge.ResolutionTakeB:
+				autoB++
+			}
+		}
+	}
+
 	// Launch the full-screen BubbleTea TUI.
 	p := tea.NewProgram(
-		NewModel(conflicts, imageA, imageB),
+		NewModel(conflicts, imageA, imageB, len(allDiffs), autoA, autoB),
 		tea.WithAltScreen(),
 	)
 

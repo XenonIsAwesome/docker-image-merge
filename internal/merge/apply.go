@@ -196,13 +196,13 @@ func copyFilePreserve(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
+	defer srcFile.Close()  //nolint:errcheck
 
 	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, info.Mode())
 	if err != nil {
 		return err
 	}
-	defer dstFile.Close()
+	defer dstFile.Close()  //nolint:errcheck
 
 	if _, err := io.Copy(dstFile, srcFile); err != nil {
 		return err
@@ -255,14 +255,14 @@ func copyXattrs(src, dst string) error {
 // filesystem on top of a base image. Used by the layered build path.
 func BuildDockerfileContent(baseImage, copiedFiles string, changes []string) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("FROM %s\n", baseImage))
+	fmt.Fprintf(&b, "FROM %s\n", baseImage)
 
 	if copiedFiles != "" {
-		b.WriteString(fmt.Sprintf("COPY %s /\n", copiedFiles))
+		fmt.Fprintf(&b, "COPY %s /\n", copiedFiles)
 	}
 
 	for _, change := range changes {
-		b.WriteString(fmt.Sprintf("%s\n", change))
+		fmt.Fprintf(&b, "%s\n", change)
 	}
 
 	return b.String()

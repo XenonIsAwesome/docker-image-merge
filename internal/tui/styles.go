@@ -125,9 +125,9 @@ func RenderConflictIndicator(resolved, total int) string {
 // conflict number, total, and active strategy.
 func RenderStatusLine(current, total int, strategy string) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("Conflict %d/%d", current+1, total))
+	fmt.Fprintf(&b, "Conflict %d/%d", current+1, total)
 	b.WriteString("  |  ")
-	b.WriteString(fmt.Sprintf("Strategy: %s", strategy))
+	fmt.Fprintf(&b, "Strategy: %s", strategy)
 	return StatusBarStyle.Render(b.String())
 }
 

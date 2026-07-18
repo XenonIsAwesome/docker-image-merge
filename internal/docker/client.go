@@ -95,7 +95,7 @@ type ImageConfig struct {
 
 // inspectResult is the top-level structure returned by docker inspect.
 type inspectResult struct {
-	Id           string       `json:"Id"`
+	ID           string       `json:"Id"`
 	Size         int64        `json:"Size"`
 	Os           string       `json:"Os"`
 	Architecture string       `json:"Architecture"`
@@ -159,7 +159,7 @@ func (c *Client) InspectImage(ctx context.Context, imageName string) (*ImageMeta
 	}
 
 	return &ImageMetadata{
-		ID:        info.Id,
+		ID:        info.ID,
 		Config:    info.Config,
 		RawConfig: rawCfg,
 		Platform:  platStr,
@@ -203,10 +203,10 @@ func (c *Client) ExtractFilesystem(ctx context.Context, imageName, destDir strin
 	exportCmd.Stdout = tarFile
 	exportCmd.Stderr = os.Stderr
 	if err := exportCmd.Run(); err != nil {
-		tarFile.Close()
+		_ = tarFile.Close()
 		return fmt.Errorf("exporting container: %w", err)
 	}
-	tarFile.Close()
+	_ = tarFile.Close()
 
 	// Extract the tar into the destination directory.
 	fmt.Fprintf(os.Stderr, "Extracting %s...\n", imageName)
@@ -217,7 +217,7 @@ func (c *Client) ExtractFilesystem(ctx context.Context, imageName, destDir strin
 	}
 
 	// Clean up the intermediate tar file.
-	os.Remove(tarPath)
+	_ = os.Remove(tarPath)
 
 	return nil
 }
@@ -307,9 +307,9 @@ func (c *Client) BuildLayered(ctx context.Context, baseImage, mergedDir, outputR
 	dockerfilePath := filepath.Join(mergedDir, "Dockerfile.merge")
 
 	var df strings.Builder
-	df.WriteString(fmt.Sprintf("FROM %s\n", baseImage))
-	df.WriteString("COPY . /tmp/merged/\n")
-	df.WriteString("RUN cp -a /tmp/merged/. / 2>/dev/null; rm -rf /tmp/merged\n")
+	fmt.Fprintf(&df, "FROM %s\n", baseImage)
+	fmt.Fprintf(&df, "COPY . /tmp/merged/\n")
+	fmt.Fprintf(&df, "RUN cp -a /tmp/merged/. / 2>/dev/null; rm -rf /tmp/merged\n")
 
 	for _, change := range changes {
 		df.WriteString(change + "\n")
@@ -319,7 +319,7 @@ func (c *Client) BuildLayered(ctx context.Context, baseImage, mergedDir, outputR
 		return "", fmt.Errorf("writing Dockerfile: %w", err)
 	}
 
-	defer os.Remove(dockerfilePath)
+	defer os.Remove(dockerfilePath) //nolint:errcheck
 
 	args := []string{"build", "-f", dockerfilePath, "-t", outputRef, "."}
 	cmd := exec.CommandContext(ctx, "docker", args...)

@@ -253,13 +253,13 @@ func compareContentDirect(pathA, pathB string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer fa.Close()
+	defer fa.Close()  //nolint:errcheck
 
 	fb, err := os.Open(pathB)
 	if err != nil {
 		return false, err
 	}
-	defer fb.Close()
+	defer fb.Close()  //nolint:errcheck
 
 	bufA := make([]byte, 64*1024)
 	bufB := make([]byte, 64*1024)
@@ -314,7 +314,7 @@ func fileHash(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer f.Close()  //nolint:errcheck
 
 	h := xxhash.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -330,7 +330,7 @@ func contentHash(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer f.Close()  //nolint:errcheck
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
@@ -465,7 +465,7 @@ func hexDump(data []byte, label string) string {
 	}
 
 	var out strings.Builder
-	out.WriteString(fmt.Sprintf("--- %s (%d bytes) ---\n", label, n))
+	fmt.Fprintf(&out, "--- %s (%d bytes) ---\n", label, n)
 
 	for i := 0; i < lines; i++ {
 		off := i * bytesPerLine
@@ -476,12 +476,12 @@ func hexDump(data []byte, label string) string {
 		chunk := data[off:end]
 
 		// Offset
-		out.WriteString(fmt.Sprintf("%08x  ", off))
+		fmt.Fprintf(&out, "%08x  ", off)
 
 		// Hex bytes
 		for j := 0; j < bytesPerLine; j++ {
 			if j < len(chunk) {
-				out.WriteString(fmt.Sprintf("%02x ", chunk[j]))
+				fmt.Fprintf(&out, "%02x ", chunk[j])
 			} else {
 				out.WriteString("   ")
 			}
@@ -503,7 +503,7 @@ func hexDump(data []byte, label string) string {
 	}
 
 	if n > maxLines*bytesPerLine {
-		out.WriteString(fmt.Sprintf("... (%d more bytes)\n", n-maxLines*bytesPerLine))
+		fmt.Fprintf(&out, "... (%d more bytes)\n", n-maxLines*bytesPerLine)
 	}
 
 	return out.String()
@@ -538,13 +538,13 @@ func GenerateDiff(pathA, pathB, labelA, labelB string) string {
 	linesB := strings.Split(string(fb), "\n")
 
 	var out strings.Builder
-	out.WriteString(fmt.Sprintf("--- %s ---\n", labelA))
+	fmt.Fprintf(&out, "--- %s ---\n", labelA)
 	for i, line := range linesA {
-		out.WriteString(fmt.Sprintf("%3d | %s\n", i+1, line))
+		fmt.Fprintf(&out, "%3d | %s\n", i+1, line)
 	}
-	out.WriteString(fmt.Sprintf("--- %s ---\n", labelB))
+	fmt.Fprintf(&out, "--- %s ---\n", labelB)
 	for i, line := range linesB {
-		out.WriteString(fmt.Sprintf("%3d | %s\n", i+1, line))
+		fmt.Fprintf(&out, "%3d | %s\n", i+1, line)
 	}
 
 	return out.String()

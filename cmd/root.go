@@ -82,7 +82,7 @@ func runMerge(imageA, imageB, outputImage string, opts *flags.Options) error {
 	if err != nil {
 		return fmt.Errorf("connecting to Docker: %w", err)
 	}
-	defer dockerClient.Close()
+	defer dockerClient.Close()  //nolint:errcheck
 
 	// Ensure both images are available locally (pulls if needed).
 	fmt.Fprintf(os.Stderr, "Ensuring images are available...\n")
@@ -108,7 +108,7 @@ func runMerge(imageA, imageB, outputImage string, opts *flags.Options) error {
 	if err != nil {
 		return fmt.Errorf("creating temp dir: %w", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer os.RemoveAll(tmpDir) //nolint:errcheck
 
 	rootA := filepath.Join(tmpDir, "image-a")
 	rootB := filepath.Join(tmpDir, "image-b")
@@ -205,14 +205,37 @@ func runMerge(imageA, imageB, outputImage string, opts *flags.Options) error {
 		}
 
 	case flags.StrategyInteractive:
-		// Launch the BubbleTea TUI for per-file conflict resolution.
-		confirmed, err := tui.Run(diffResult.Conflicts, imageA, imageB)
-		if err != nil {
-			return fmt.Errorf("running conflict resolver: %w", err)
+		// Auto-resolve non-conflicting diffs, then only pass real conflicts to the TUI.
+		for _, c := range diffResult.Conflicts {
+			if !c.Kind.NeedsResolution() {
+				switch c.Kind {
+				case merge.OnlyA:
+					c.Resolution = merge.ResolutionTakeA
+				case merge.OnlyB:
+					c.Resolution = merge.ResolutionTakeB
+				}
+			}
 		}
-		if !confirmed {
-			fmt.Fprintf(os.Stderr, "Aborted.\n")
-			return nil
+
+		// Filter to only conflicts that need user resolution.
+		var toResolve []*merge.Conflict
+		for _, c := range diffResult.Conflicts {
+			if c.Kind.NeedsResolution() && c.Resolution == merge.ResolutionNone {
+				toResolve = append(toResolve, c)
+			}
+		}
+
+		if len(toResolve) == 0 {
+			fmt.Fprintf(os.Stderr, "All differences auto-resolved.\n")
+		} else {
+			confirmed, err := tui.Run(toResolve, diffResult.Conflicts, imageA, imageB)
+			if err != nil {
+				return fmt.Errorf("running conflict resolver: %w", err)
+			}
+			if !confirmed {
+				fmt.Fprintf(os.Stderr, "Aborted.\n")
+				return nil
+			}
 		}
 	}
 
