@@ -1,0 +1,6 @@
+docker-image-merge
+.git
+.github
+*.md
+Makefile
+Dockerfile.test
