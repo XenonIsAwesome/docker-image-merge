@@ -169,14 +169,16 @@ func runMerge(imageA, imageB, outputImage string, opts *flags.Options) error {
 	// Apply the chosen conflict resolution strategy.
 	switch opts.Strategy {
 	case flags.StrategyFail:
-		// Print conflicts and exit with an error.
-		fmt.Fprintf(os.Stderr, "\nConflicts found:\n")
-		for _, c := range diffResult.Conflicts {
-			if c.Kind.NeedsResolution() {
-				fmt.Fprintf(os.Stderr, "  - %s\n", c.Summary())
+		// Print conflicts and exit with an error if any exist.
+		if conflictCount > 0 {
+			fmt.Fprintf(os.Stderr, "\nConflicts found:\n")
+			for _, c := range diffResult.Conflicts {
+				if c.Kind.NeedsResolution() {
+					fmt.Fprintf(os.Stderr, "  - %s\n", c.Summary())
+				}
 			}
+			return fmt.Errorf("%d conflicts found (strategy: fail)", conflictCount)
 		}
-		return fmt.Errorf("%d conflicts found (strategy: fail)", conflictCount)
 
 	case flags.StrategyAutoA:
 		// Automatically take image A's version for every conflict.
