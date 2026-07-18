@@ -434,6 +434,81 @@ func isDir(path string) bool {
 	return err == nil && info.IsDir()
 }
 
+// isBinary checks if the first 512 bytes of a file contain a null byte,
+// which is the standard heuristic for detecting binary content.
+func isBinary(data []byte) bool {
+	n := len(data)
+	if n > 512 {
+		n = 512
+	}
+	for _, b := range data[:n] {
+		if b == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// hexDump produces a hex+ASCII view of binary data, showing up to maxLines
+// lines of 16 bytes each. This is useful for inspecting binary files in the TUI.
+func hexDump(data []byte, label string) string {
+	const bytesPerLine = 16
+	const maxLines = 16
+
+	n := len(data)
+	lines := n / bytesPerLine
+	if n%bytesPerLine != 0 {
+		lines++
+	}
+	if lines > maxLines {
+		lines = maxLines
+	}
+
+	var out strings.Builder
+	out.WriteString(fmt.Sprintf("--- %s (%d bytes) ---\n", label, n))
+
+	for i := 0; i < lines; i++ {
+		off := i * bytesPerLine
+		end := off + bytesPerLine
+		if end > n {
+			end = n
+		}
+		chunk := data[off:end]
+
+		// Offset
+		out.WriteString(fmt.Sprintf("%08x  ", off))
+
+		// Hex bytes
+		for j := 0; j < bytesPerLine; j++ {
+			if j < len(chunk) {
+				out.WriteString(fmt.Sprintf("%02x ", chunk[j]))
+			} else {
+				out.WriteString("   ")
+			}
+			if j == 7 {
+				out.WriteString(" ")
+			}
+		}
+
+		// ASCII representation
+		out.WriteString(" |")
+		for _, b := range chunk {
+			if b >= 0x20 && b < 0x7f {
+				out.WriteByte(b)
+			} else {
+				out.WriteByte('.')
+			}
+		}
+		out.WriteString("|\n")
+	}
+
+	if n > maxLines*bytesPerLine {
+		out.WriteString(fmt.Sprintf("... (%d more bytes)\n", n-maxLines*bytesPerLine))
+	}
+
+	return out.String()
+}
+
 // GenerateDiff produces a simple side-by-side text representation of two files.
 // The output is intended for display in the TUI diff pane.
 func GenerateDiff(pathA, pathB string) string {
@@ -448,6 +523,15 @@ func GenerateDiff(pathA, pathB string) string {
 	}
 	if errB != nil {
 		return fmt.Sprintf("--- A ---\n%s\n(unable to read B: %v)", string(fa), errB)
+	}
+
+	// Detect binary files and show a hex dump instead of garbled output.
+	if isBinary(fa) || isBinary(fb) {
+		var out strings.Builder
+		out.WriteString(hexDump(fa, "Image A"))
+		out.WriteString("\n")
+		out.WriteString(hexDump(fb, "Image B"))
+		return out.String()
 	}
 
 	linesA := strings.Split(string(fa), "\n")
