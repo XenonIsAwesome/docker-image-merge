@@ -22,10 +22,10 @@ Merge the filesystems of two Docker images into a new image with interactive con
 
 ```sh
 # Linux / macOS
-curl -fsSL https://xenon.github.io/docker-image-merge/install.sh | sh
+curl -fsSL https://xenonisawesome.github.io/docker-image-merge/install.sh | sh
 
 # Windows (PowerShell)
-iwr -useb https://xenon.github.io/docker-image-merge/install.ps1 | iex
+iwr -useb https://xenonisawesome.github.io/docker-image-merge/install.ps1 | iex
 ```
 
 ### Merge two images

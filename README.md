@@ -2,6 +2,8 @@
 
 Merge the filesystems of two Docker images with interactive conflict resolution.
 
+[Documentation](https://xenonisawesome.github.io/docker-image-merge/) · [Releases](https://github.com/XenonIsAwesome/docker-image-merge/releases)
+
 ## Disclaimer
 
 Docker is a trademark of Docker, Inc. This project is not affiliated with,
@@ -9,7 +11,19 @@ endorsed by, or sponsored by Docker, Inc.
 
 ## Installation
 
-### Binary (recommended)
+### Quick install (recommended)
+
+```bash
+# Linux / macOS
+curl -fsSL https://xenonisawesome.github.io/docker-image-merge/install.sh | sh
+
+# Windows (PowerShell)
+iwr -useb https://xenonisawesome.github.io/docker-image-merge/install.ps1 | iex
+```
+
+See the [full installation guide](https://xenonisawesome.github.io/docker-image-merge/installation.html) for system-wide installs, custom directories, and all options.
+
+### Binary
 
 Download a pre-built binary from [Releases](https://github.com/XenonIsAwesome/docker-image-merge/releases).
 

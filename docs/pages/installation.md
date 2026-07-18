@@ -5,7 +5,7 @@
 ### Linux / macOS
 
 ```sh
-curl -fsSL https://xenon.github.io/docker-image-merge/install.sh | sh
+curl -fsSL https://xenonisawesome.github.io/docker-image-merge/install.sh | sh
 ```
 
 This detects your OS and architecture, downloads the latest release from GitHub, and installs it to `~/.docker/cli-plugins/docker-imagemerge`.
@@ -13,7 +13,7 @@ This detects your OS and architecture, downloads the latest release from GitHub,
 ### Linux / macOS — System-wide
 
 ```sh
-curl -fsSL https://xenon.github.io/docker-image-merge/install.sh | sudo sh -s -- --system
+curl -fsSL https://xenonisawesome.github.io/docker-image-merge/install.sh | sudo sh -s -- --system
 ```
 
 Installs to `/usr/local/lib/docker/cli-plugins/docker-imagemerge` (requires root).
@@ -21,13 +21,13 @@ Installs to `/usr/local/lib/docker/cli-plugins/docker-imagemerge` (requires root
 ### Linux / macOS — Custom directory
 
 ```sh
-curl -fsSL https://xenon.github.io/docker-image-merge/install.sh | sh -s -- --dir /opt/docker-plugins
+curl -fsSL https://xenonisawesome.github.io/docker-image-merge/install.sh | sh -s -- --dir /opt/docker-plugins
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-iwr -useb https://xenon.github.io/docker-image-merge/install.ps1 | iex
+iwr -useb https://xenonisawesome.github.io/docker-image-merge/install.ps1 | iex
 ```
 
 Installs to `%USERPROFILE%\.docker\cli-plugins\docker-imagemerge.exe`.
@@ -35,7 +35,7 @@ Installs to `%USERPROFILE%\.docker\cli-plugins\docker-imagemerge.exe`.
 ### Windows — System-wide
 
 ```powershell
-iwr -useb https://xenon.github.io/docker-image-merge/install.ps1 -OutFile install.ps1
+iwr -useb https://xenonisawesome.github.io/docker-image-merge/install.ps1 -OutFile install.ps1
 .\install.ps1 -System
 ```
 
@@ -44,7 +44,7 @@ Installs to `%ProgramData%\Docker\cli-plugins\docker-imagemerge.exe`.
 ### Windows — Custom directory
 
 ```powershell
-iwr -useb https://xenon.github.io/docker-image-merge/install.ps1 -OutFile install.ps1
+iwr -useb https://xenonisawesome.github.io/docker-image-merge/install.ps1 -OutFile install.ps1
 .\install.ps1 -Dir C:\tools\docker-plugins
 ```
 
