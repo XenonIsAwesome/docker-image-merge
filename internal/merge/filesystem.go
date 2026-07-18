@@ -16,39 +16,52 @@ import (
 	"github.com/cespare/xxhash/v2"
 )
 
+// DiffEngine compares two extracted image filesystems and produces a list of
+// conflicts. It is stateless — create one per comparison and call Run().
 type DiffEngine struct {
+	// RootA is the absolute path to image A's extracted filesystem.
 	RootA string
+
+	// RootB is the absolute path to image B's extracted filesystem.
 	RootB string
 }
 
+// DiffResult holds the complete output of a filesystem comparison.
 type DiffResult struct {
+	// Conflicts is the sorted list of all paths that differ between the images.
 	Conflicts []*Conflict
-	Stats     DiffStats
+
+	// Stats provides aggregate counts by conflict kind.
+	Stats DiffStats
 }
 
+// DiffStats is a set of counters for each classification the diff engine produces.
 type DiffStats struct {
-	OnlyA      int
-	OnlyB      int
-	Same       int
-	Conflicts  int
-	TypeChange int
-	PermOnly   int
+	OnlyA       int
+	OnlyB       int
+	Same        int
+	Conflicts   int
+	TypeChange  int
+	PermOnly    int
 	BothDeleted int
-	Total      int
+	Total       int
 }
 
+// NewDiffEngine creates a DiffEngine that will compare the two given roots.
 func NewDiffEngine(rootA, rootB string) *DiffEngine {
 	return &DiffEngine{RootA: rootA, RootB: rootB}
 }
 
+// Run walks both directory trees simultaneously and returns a DiffResult
+// containing every classified path and aggregate statistics.
 func (d *DiffEngine) Run() (*DiffResult, error) {
 	result := &DiffResult{}
 
-	err := d.walk("", result)
-	if err != nil {
+	if err := d.walk("", result); err != nil {
 		return nil, fmt.Errorf("walking trees: %w", err)
 	}
 
+	// Sort conflicts by path for stable, predictable output.
 	sort.Slice(result.Conflicts, func(i, j int) bool {
 		return result.Conflicts[i].Path < result.Conflicts[j].Path
 	})
@@ -56,6 +69,7 @@ func (d *DiffEngine) Run() (*DiffResult, error) {
 	return result, nil
 }
 
+// walk recursively compares relPath in both trees, appending results to result.
 func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 	pathA := filepath.Join(d.RootA, relPath)
 	pathB := filepath.Join(d.RootB, relPath)
@@ -66,6 +80,7 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 	existsA := errA == nil
 	existsB := errB == nil
 
+	// Case 1: path missing from both sides.
 	switch {
 	case !existsA && !existsB:
 		result.Stats.BothDeleted++
@@ -75,9 +90,10 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		})
 		return nil
 
+	// Case 2: exists only in A.
 	case existsA && !existsB:
 		if infoA.IsDir() {
-			return nil
+			return nil // directories that only exist in A are not interesting
 		}
 		result.Stats.OnlyA++
 		result.Conflicts = append(result.Conflicts, &Conflict{
@@ -86,6 +102,7 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		})
 		return nil
 
+	// Case 3: exists only in B.
 	case !existsA && existsB:
 		if infoB.IsDir() {
 			return nil
@@ -98,21 +115,24 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		return nil
 	}
 
+	// Both sides exist. If both are directories, recurse into children.
 	if infoA.IsDir() && infoB.IsDir() {
 		return d.mergeDirs(relPath, result)
 	}
 
+	// Type mismatch (file vs dir vs symlink etc.).
 	if infoA.IsDir() != infoB.IsDir() {
 		result.Stats.TypeChange++
 		result.Conflicts = append(result.Conflicts, &Conflict{
-			Path: relPath,
-			Kind: TypeChange,
+			Path:  relPath,
+			Kind:  TypeChange,
 			InfoA: fileInfoFrom(pathA, relPath, infoA),
 			InfoB: fileInfoFrom(pathB, relPath, infoB),
 		})
 		return nil
 	}
 
+	// Build FileInfo for both sides (computes content hashes for files).
 	finfoA, err := d.buildFileInfo(pathA, relPath, infoA)
 	if err != nil {
 		return err
@@ -122,6 +142,7 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		return err
 	}
 
+	// Compare symlinks by target path.
 	isSymlinkA := infoA.Mode()&fs.ModeSymlink != 0
 	isSymlinkB := infoB.Mode()&fs.ModeSymlink != 0
 	if isSymlinkA && isSymlinkB {
@@ -129,6 +150,12 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		targetB, _ := os.Readlink(pathB)
 		if targetA == targetB {
 			result.Stats.Same++
+			result.Conflicts = append(result.Conflicts, &Conflict{
+				Path:  relPath,
+				Kind:  Same,
+				InfoA: finfoA,
+				InfoB: finfoB,
+			})
 			return nil
 		}
 		result.Stats.Conflicts++
@@ -141,12 +168,14 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 		return nil
 	}
 
+	// Compare file contents using hashing.
 	contentSame, err := compareContent(pathA, pathB, infoA.Size())
 	if err != nil {
 		return fmt.Errorf("comparing %s: %w", relPath, err)
 	}
 
 	if contentSame {
+		// Content is identical — check if permissions differ.
 		permA := infoA.Mode().Perm()
 		permB := infoB.Mode().Perm()
 		if permA != permB {
@@ -159,10 +188,17 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 			})
 		} else {
 			result.Stats.Same++
+			result.Conflicts = append(result.Conflicts, &Conflict{
+				Path:  relPath,
+				Kind:  Same,
+				InfoA: finfoA,
+				InfoB: finfoB,
+			})
 		}
 		return nil
 	}
 
+	// Content differs — this is a real conflict.
 	result.Stats.Conflicts++
 	result.Conflicts = append(result.Conflicts, &Conflict{
 		Path:  relPath,
@@ -173,6 +209,7 @@ func (d *DiffEngine) walk(relPath string, result *DiffResult) error {
 	return nil
 }
 
+// mergeDirs recurses into a directory that exists in both trees.
 func (d *DiffEngine) mergeDirs(relPath string, result *DiffResult) error {
 	pathA := filepath.Join(d.RootA, relPath)
 	pathB := filepath.Join(d.RootB, relPath)
@@ -186,6 +223,7 @@ func (d *DiffEngine) mergeDirs(relPath string, result *DiffResult) error {
 		return err
 	}
 
+	// Merge the two entry lists and iterate in sorted order.
 	allEntries := unionSorted(entriesA, entriesB)
 
 	for _, name := range allEntries {
@@ -200,6 +238,8 @@ func (d *DiffEngine) mergeDirs(relPath string, result *DiffResult) error {
 	return nil
 }
 
+// compareContent checks whether two files have the same content. For small
+// files (< 1 MB) it reads both directly; for larger files it compares hashes.
 func compareContent(pathA, pathB string, size int64) (bool, error) {
 	if size < 1024*1024 {
 		return compareContentDirect(pathA, pathB)
@@ -207,6 +247,8 @@ func compareContent(pathA, pathB string, size int64) (bool, error) {
 	return compareContentHash(pathA, pathB)
 }
 
+// compareContentDirect reads two files in chunks and returns true if every
+// byte is identical.
 func compareContentDirect(pathA, pathB string) (bool, error) {
 	fa, err := os.Open(pathA)
 	if err != nil {
@@ -253,6 +295,8 @@ func compareContentDirect(pathA, pathB string) (bool, error) {
 	}
 }
 
+// compareContentHash computes xxhash digests of both files and compares them.
+// This is faster than sha256 and sufficient for equality checking.
 func compareContentHash(pathA, pathB string) (bool, error) {
 	hashA, err := fileHash(pathA)
 	if err != nil {
@@ -265,6 +309,7 @@ func compareContentHash(pathA, pathB string) (bool, error) {
 	return hashA == hashB, nil
 }
 
+// fileHash returns the hex-encoded xxhash of a file's content.
 func fileHash(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -279,6 +324,8 @@ func fileHash(path string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
+// contentHash returns the hex-encoded SHA-256 of a file's content. This is
+// used for producing stable hashes when needed.
 func contentHash(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -293,6 +340,8 @@ func contentHash(path string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
+// fileInfoFrom builds a FileInfo from an already-lstat'd os.FileInfo. It does
+// not compute content hashes — use buildFileInfo for that.
 func fileInfoFrom(absPath, relPath string, info fs.FileInfo) *FileInfo {
 	fi := &FileInfo{
 		RelPath: relPath,
@@ -318,6 +367,8 @@ func fileInfoFrom(absPath, relPath string, info fs.FileInfo) *FileInfo {
 	return fi
 }
 
+// buildFileInfo extends fileInfoFrom by also computing a content hash for
+// regular (non-directory, non-symlink) files.
 func (d *DiffEngine) buildFileInfo(absPath, relPath string, info fs.FileInfo) (*FileInfo, error) {
 	fi := fileInfoFrom(absPath, relPath, info)
 
@@ -332,6 +383,8 @@ func (d *DiffEngine) buildFileInfo(absPath, relPath string, info fs.FileInfo) (*
 	return fi, nil
 }
 
+// readDirNames returns the sorted list of entry names in a directory,
+// excluding "." and "..".
 func readDirNames(dirPath string) ([]string, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
@@ -348,6 +401,8 @@ func readDirNames(dirPath string) ([]string, error) {
 	return names, nil
 }
 
+// unionSorted returns the sorted union of two string slices with no duplicates.
+// Directories are sorted before regular files for deterministic walk order.
 func unionSorted(a, b []string) []string {
 	seen := make(map[string]struct{}, len(a)+len(b))
 	var result []string
@@ -377,11 +432,14 @@ func unionSorted(a, b []string) []string {
 	return result
 }
 
+// isDir returns true if the given path exists and is a directory.
 func isDir(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
 }
 
+// GenerateDiff produces a simple side-by-side text representation of two files.
+// The output is intended for display in the TUI diff pane.
 func GenerateDiff(pathA, pathB string) string {
 	fa, errA := os.ReadFile(pathA)
 	fb, errB := os.ReadFile(pathB)
