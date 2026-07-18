@@ -56,8 +56,9 @@ jobs:
       - name: Build and push Docker image
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          docker build -t ghcr.io/${{ github.repository }}:${VERSION} .
-          docker tag ghcr.io/${{ github.repository }}:${VERSION} ghcr.io/${{ github.repository }}:latest
+          IMAGE=ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -t ${IMAGE}:${VERSION} .
+          docker tag ${IMAGE}:${VERSION} ${IMAGE}:latest
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ghcr.io/${{ github.repository }}:${VERSION}
-          docker push ghcr.io/${{ github.repository }}:latest
+          docker push ${IMAGE}:${VERSION}
+          docker push ${IMAGE}:latest
