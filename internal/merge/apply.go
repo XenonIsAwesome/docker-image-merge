@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 )
 
 // ApplyResult holds the outcome of applying conflict resolutions to produce
@@ -219,9 +218,8 @@ func copyFilePreserve(src, dst string) error {
 	}
 
 	// Restore ownership if running as root.
-	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
-		_ = os.Chown(dst, int(stat.Uid), int(stat.Gid))
-	}
+	uid, gid := getUIDGID(info)
+	_ = os.Chown(dst, uid, gid)
 
 	return copyXattrs(src, dst)
 }

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 
 	"github.com/cespare/xxhash/v2"
 )
@@ -351,10 +350,7 @@ func fileInfoFrom(absPath, relPath string, info fs.FileInfo) *FileInfo {
 		Mode:    uint32(info.Mode()),
 	}
 
-	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
-		fi.UID = int(stat.Uid)
-		fi.GID = int(stat.Gid)
-	}
+	fi.UID, fi.GID = getUIDGID(info)
 
 	if info.Mode()&fs.ModeSymlink != 0 {
 		fi.IsSymlink = true
