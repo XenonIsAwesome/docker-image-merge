@@ -59,7 +59,8 @@ HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css \
                          doxygen-awesome-css/doxygen-awesome-sidebar-only.css
 HTML_EXTRA_FILES       = doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
                          doxygen-awesome-css/doxygen-awesome-paragraph-link.js \
-                         doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js
+                         doxygen-awesome-css/doxygen-awesome-fragment-copy-button.js \
+                         custom.css
 
 # Custom header/footer
 HTML_HEADER            = header.html
