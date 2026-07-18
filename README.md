@@ -1,4 +1,4 @@
-# docker-image-merge
+# docker-imagemerge
 
 Merge the filesystems of two Docker images with interactive conflict resolution.
 
@@ -18,13 +18,13 @@ Download a pre-built binary from [Releases](https://github.com/XenonIsAwesome/do
 ```bash
 git clone https://github.com/XenonIsAwesome/docker-image-merge.git
 cd docker-image-merge
-go build -trimpath -ldflags='-s -w' -o docker-image-merge .
+go build -trimpath -ldflags='-s -w' -o docker-imagemerge .
 ```
 
 ### Docker
 
 ```bash
-docker build -t docker-image-merge .
+docker build -t docker-imagemerge .
 ```
 
 ## Usage
@@ -34,19 +34,19 @@ docker build -t docker-image-merge .
 Copy the binary to a directory on your `$PATH`:
 
 ```bash
-sudo cp docker-image-merge /usr/local/bin/docker-image-merge
+sudo cp docker-imagemerge /usr/local/bin/docker-imagemerge
 ```
 
 Then run:
 
 ```bash
-docker image-merge <image-a> <image-b> <output-image>
+docker imagemerge <image-a> <image-b> <output-image>
 ```
 
 ### Standalone
 
 ```bash
-./docker-image-merge <image-a> <image-b> <output-image>
+./docker-imagemerge <image-a> <image-b> <output-image>
 ```
 
 ## Examples
@@ -54,7 +54,7 @@ docker image-merge <image-a> <image-b> <output-image>
 ### Interactive TUI (default)
 
 ```bash
-docker image-merge nginx:1.25-alpine my-custom-nginx:latest merged-nginx:latest
+docker imagemerge nginx:1.25-alpine my-custom-nginx:latest merged-nginx:latest
 ```
 
 Opens a full-screen TUI where you resolve each conflicting file interactively.
@@ -63,25 +63,25 @@ Opens a full-screen TUI where you resolve each conflicting file interactively.
 
 ```bash
 # Always take image A's version on conflict
-docker image-merge --strategy=auto-a nginx:latest my-custom:latest merged:latest
+docker imagemerge --strategy=auto-a nginx:latest my-custom:latest merged:latest
 
 # Always take image B's version on conflict
-docker image-merge --strategy=auto-b nginx:latest my-custom:latest merged:latest
+docker imagemerge --strategy=auto-b nginx:latest my-custom:latest merged:latest
 
 # Fail on first conflict
-docker image-merge --strategy=fail nginx:latest my-custom:latest merged:latest
+docker imagemerge --strategy=fail nginx:latest my-custom:latest merged:latest
 ```
 
 ### Squashed output (single layer)
 
 ```bash
-docker image-merge --squash nginx:latest my-custom:latest merged:latest
+docker imagemerge --squash nginx:latest my-custom:latest merged:latest
 ```
 
 ### Inherit metadata from image B
 
 ```bash
-docker image-merge --metadata-from=b nginx:latest my-custom:latest merged:latest
+docker imagemerge --metadata-from=b nginx:latest my-custom:latest merged:latest
 ```
 
 ## Flags

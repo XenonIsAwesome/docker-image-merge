@@ -1,7 +1,7 @@
 .PHONY: build install clean test
 
 PLUGIN_DIR := $(HOME)/.docker/cli-plugins
-BINARY := docker-image-merge
+BINARY := docker-imagemerge
 IMAGE := $(BINARY)-builder
 
 build:

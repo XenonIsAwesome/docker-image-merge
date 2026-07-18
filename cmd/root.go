@@ -36,7 +36,7 @@ func NewRootCmd() *cobra.Command {
 	opts := &flags.Options{}
 
 	cmd := &cobra.Command{
-		Use:   "docker-image-merge <image-a> <image-b> <output-image>",
+		Use:   "imagemerge <image-a> <image-b> <output-image>",
 		Short: "Merge the filesystems of two Docker images",
 		Long: `Merge the filesystems of two Docker images into a new image.
 

@@ -10,8 +10,8 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /docker-image-merge .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /docker-imagemerge .
 
 FROM scratch
-COPY --from=builder /docker-image-merge /docker-image-merge
-ENTRYPOINT ["/docker-image-merge"]
+COPY --from=builder /docker-imagemerge /docker-imagemerge
+ENTRYPOINT ["/docker-imagemerge"]
