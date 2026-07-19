@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "pr-reviewer": {
+      "description": "Reviews PRs for Go quality, lint compliance, and project conventions",
+      "mode": "primary",
+      "prompt": "{file:./.opencode/agents/pr-reviewer.md}",
+      "permission": { "edit": "deny", "bash": "deny" }
+    }
+  }
+}

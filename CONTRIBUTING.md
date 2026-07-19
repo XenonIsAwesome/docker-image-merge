@@ -56,6 +56,12 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock imagemerge-test
 - Platform-specific code goes in `_linux.go` / `_other.go` files
 - Integration tests use the `integration` build tag
 
+## AI code review
+
+PRs are automatically reviewed by OpenCode using the `pr-reviewer` agent (powered by the free `big-pickle` model via OpenCode Zen). The review checks GoDoc, lint compliance, naming conventions, and project-specific gotchas.
+
+To trigger a manual review on any PR, leave a comment containing `/oc` (e.g., `/oc review this`).
+
 ## Pull requests
 
 1. Fork the repo and create a feature branch
