@@ -40,6 +40,12 @@ CI order: build → vet → unit tests → lint, then integration tests (depend 
 - `tests/` directory excluded from linting (per `.golangci.yml`).
 - Uses `//nolint:errcheck` on intentional error ignores (e.g., `defer` calls).
 
+## OpenCode config
+
+- `opencode.json` defines the `pr-reviewer` agent (read-only, used by GitHub Action).
+- `.opencode/agents/pr-reviewer.md` contains the review prompt with project-specific checks.
+- PR reviews run automatically on open/sync via `.github/workflows/opencode-review.yml` using `opencode/big-pickle` (free model via OpenCode Zen).
+
 ## Gotchas
 
 - Layered build mode can fail on Docker-managed files (`/etc/resolv.conf`, `/etc/hosts`). Tool falls back to squash mode automatically.
