@@ -1,0 +1,39 @@
+/* Custom CSS overrides for docker-image-merge documentation */
+
+:root {
+    --primary-color: #10b981;
+    --primary-dark-color: #059669;
+    --link-color: #10b981;
+    --border-radius: 0.5rem;
+}
+
+.dark {
+    --primary-color: #34d399;
+    --primary-dark-color: #6ee7b7;
+    --link-color: #34d399;
+}
+
+/* Code blocks */
+pre.fragment {
+    border-radius: var(--border-radius);
+}
+
+/* Page title */
+div.title {
+    font-size: 1.8rem;
+}
+
+/* Table styling */
+table.memberdecls,
+table.fieldtable {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+/* Smooth transitions for dark mode */
+body,
+div.contents,
+td.field,
+td.fieldList {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}

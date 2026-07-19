@@ -1,6 +1,6 @@
 ---
 description: Reviews PRs for Go quality, lint compliance, and project conventions
-mode: subagent
+mode: primary
 permission:
   edit: deny
   bash: deny
