@@ -4,3 +4,4 @@ docker-image-merge
 tmp/
 .opencode/
 openspec/
+site/
