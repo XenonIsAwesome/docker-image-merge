@@ -1,0 +1,95 @@
+/* Sidebar layout */
+body {
+  display: flex;
+  min-height: 100vh;
+  margin: 0;
+}
+
+nav.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  padding: 1rem 0;
+  overflow-y: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  z-index: 100;
+}
+
+nav.sidebar .sidebar-title {
+  padding: 0.5rem 1rem 1rem;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  border-bottom: 1px solid #2a2a4a;
+  margin-bottom: 0.5rem;
+}
+
+nav.sidebar .sidebar-section {
+  padding: 0.5rem 0;
+}
+
+nav.sidebar .sidebar-section-title {
+  padding: 0.25rem 1rem;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  font-weight: 600;
+}
+
+nav.sidebar a {
+  display: block;
+  padding: 0.35rem 1rem 0.35rem 1.5rem;
+  color: #c0c0c0;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+nav.sidebar a:hover {
+  background: #2a2a4a;
+  color: #fff;
+}
+
+nav.sidebar a.active {
+  background: #3a3a6a;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Adjust main content for sidebar */
+body > nav:first-child,
+body > main {
+  margin-left: 260px;
+}
+
+body > nav:first-child {
+  position: fixed;
+  top: 0;
+  left: 260px;
+  right: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+body > main {
+  padding: 2rem;
+  max-width: 900px;
+}
+
+/* Responsive: hide sidebar on small screens */
+@media (max-width: 768px) {
+  nav.sidebar {
+    display: none;
+  }
+  body > nav:first-child,
+  body > main {
+    margin-left: 0;
+  }
+}

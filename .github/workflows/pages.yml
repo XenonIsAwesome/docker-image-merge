@@ -35,6 +35,9 @@ jobs:
       - name: Copy hand-written pages
         run: cp docs/pages/*.md site/
 
+      - name: Inject sidebar
+        run: sh scripts/inject-sidebar.sh
+
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
